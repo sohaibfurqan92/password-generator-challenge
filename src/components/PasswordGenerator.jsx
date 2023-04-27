@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CopyIcon from '../assets/copy.svg';
+import { returnValidPassword } from '../utils';
 
 const PasswordGenerator = () => {
   const [passwordLength, setPasswordLength] = useState(32);
@@ -8,8 +9,49 @@ const PasswordGenerator = () => {
   const [numbersSelected, setNumbersSelected] = useState(false);
   const [symbolsSelected, setSymbolsSelected] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState(null);
+
+  const [alert, setAlert] = useState(null);
+
+  const [isDisabled, setIsDisabled] = useState(false);
   const MIN_RANGE = 4;
   const MAX_RANGE = 64;
+
+  const handleGeneratePassword = (e) => {
+    e.preventDefault();
+
+    const password = returnValidPassword(
+      lowercaseSelected,
+      uppercaseSelected,
+      numbersSelected,
+      symbolsSelected,
+      passwordLength
+    );
+
+    setGeneratedPassword(password);
+  };
+
+  const handleCopyToClipboard = (e) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(generatedPassword);
+    setAlert('Password copied to clipboard!');
+  };
+
+  useEffect(() => {
+    if (
+      !lowercaseSelected &&
+      !uppercaseSelected &&
+      !numbersSelected &&
+      !symbolsSelected
+    ) {
+      setIsDisabled(true);
+      setAlert('Please select at least one option to generate a password.');
+      setGeneratedPassword(null);
+    } else {
+      setIsDisabled(false);
+      setAlert(null);
+    }
+  }, [lowercaseSelected, uppercaseSelected, numbersSelected, symbolsSelected]);
+
   return (
     <form className="rounded-md space-y-3 ">
       {/* char length range picker */}
@@ -140,7 +182,11 @@ const PasswordGenerator = () => {
 
       {/* symbols */}
 
-      <button className="py-6 px-4 w-full bg-gradient-to-r from-green-brightGreen via-green-middleGreen to-green-blueishGreen rounded-lg ">
+      <button
+        className="py-6 px-4 w-full bg-gradient-to-r from-green-brightGreen via-green-middleGreen to-green-blueishGreen rounded-lg "
+        disabled={isDisabled}
+        onClick={handleGeneratePassword}
+      >
         Generate Password
       </button>
 
@@ -149,8 +195,11 @@ const PasswordGenerator = () => {
       <div className="bg-gray-2 py-6 px-4 flex justify-between items-center rounded-lg">
         {generatedPassword && (
           <>
-            <p>Hello World</p>
-            <button>
+            <p>{generatedPassword}</p>
+            <button
+              onClick={(e) => handleCopyToClipboard(e)}
+              disabled={isDisabled}
+            >
               <img
                 src={CopyIcon}
                 alt="Copy to clipboard"
@@ -161,6 +210,8 @@ const PasswordGenerator = () => {
           </>
         )}
       </div>
+
+      {alert && <p className="text-center">{alert}</p>}
     </form>
   );
 };
